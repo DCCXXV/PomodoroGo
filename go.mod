@@ -1,4 +1,4 @@
-module PomodoroGo/DCCXXV/github.com
+module github.com/DCCXXV/PomodoroGo
 
 go 1.23.4
 
