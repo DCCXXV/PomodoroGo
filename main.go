@@ -5,6 +5,8 @@ import (
 	"image/color"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"gioui.org/app"
@@ -75,6 +77,8 @@ func draw(w *app.Window) error {
 	var mainButton widget.Clickable
 	var resetButton widget.Clickable
 	var autorun widget.Bool
+	var studyEd widget.Editor
+	var breakEd widget.Editor
 
 	for {
 		evt := w.Event()
@@ -87,6 +91,16 @@ func draw(w *app.Window) error {
 			// logic
 			if mainButton.Clicked(gtx) {
 				isRunning = !isRunning
+
+				if studyEd.Text() != "" {
+					aux, _ := strconv.ParseInt(strings.TrimSpace(studyEd.Text()), 10, 64)
+					studyTime = int(aux * 60)
+				}
+
+				if breakEd.Text() != "" {
+					aux, _ := strconv.ParseInt(strings.TrimSpace(breakEd.Text()), 10, 64)
+					breakTime = int(aux * 60)
+				}
 
 				if progress >= 1 {
 					if !isBreak {
@@ -126,14 +140,14 @@ func draw(w *app.Window) error {
 				// timer bar
 				layout.Rigid(
 					func(gtx C) D {
-						bar := material.ProgressBar(th, progress)
+						bar := material.ProgressBar(th, 1-progress)
 						bar.Height = 10
 						bar.Radius = 0
 
 						if isBreak {
 							bar.Color = color.NRGBA{R: 100, G: 149, B: 237, A: 255}
 						} else {
-							bar.Color = color.NRGBA{R: 242, G: 0, B: 60, A: 255}
+							bar.Color = color.NRGBA{R: 181, G: 63, B: 77, A: 255}
 						}
 
 						bar.TrackColor = color.NRGBA{A: 0}
@@ -141,12 +155,31 @@ func draw(w *app.Window) error {
 					},
 				),
 
-				// info
+				// laps + autorun checkbox
 				layout.Rigid(
 					func(gtx C) D {
-						label := material.H6(th, fmt.Sprintf(" Laps: %d", laps))
-						label.Font.Weight = font.Medium
-						return label.Layout(gtx)
+						return layout.Flex{
+							Axis:    layout.Horizontal,
+							Spacing: layout.SpaceBetween,
+						}.Layout(gtx,
+
+							layout.Rigid(
+								func(gtx C) D {
+									checkbox := material.CheckBox(th, &autorun, "AutoRun")
+									checkbox.TextSize = unit.Sp(16)
+									checkbox.Font.Weight = font.Medium
+									return checkbox.Layout(gtx)
+								},
+							),
+
+							layout.Rigid(
+								func(gtx C) D {
+									label := material.H6(th, fmt.Sprintf(" Laps: %d ", laps))
+									label.Font.Weight = font.Medium
+									return label.Layout(gtx)
+								},
+							),
+						)
 					},
 				),
 
@@ -205,7 +238,7 @@ func draw(w *app.Window) error {
 										func(gtx C) D {
 											btn := material.Button(th, &resetButton, "Reset")
 											btn.TextSize = unit.Sp(16)
-											btn.Background = color.NRGBA{R: 0, G: 0, B: 0, A: 255}
+											btn.Background = color.NRGBA{R: 66, G: 70, B: 96, A: 255}
 											return btn.Layout(gtx)
 										},
 									),
@@ -222,12 +255,41 @@ func draw(w *app.Window) error {
 							Axis:    layout.Horizontal,
 							Spacing: layout.SpaceEvenly,
 						}.Layout(gtx,
+							layout.Rigid(
+								func(gtx C) D {
+									return material.Label(th, unit.Sp(16), "Study time: ").Layout(gtx)
+								},
+							),
 
 							layout.Rigid(
 								func(gtx C) D {
-									checkbox := material.CheckBox(th, &autorun, "AutoRun")
-									checkbox.TextSize = unit.Sp(16)
-									return checkbox.Layout(gtx)
+									minutes := studyTime / 60
+									seconds := studyTime % 60
+									text := fmt.Sprintf("%02d:%02d", minutes, seconds)
+
+									ed := material.Editor(th, &studyEd, text)
+									ed.Editor.SingleLine = true
+
+									return ed.Layout(gtx)
+								},
+							),
+
+							layout.Rigid(
+								func(gtx C) D {
+									return material.Label(th, unit.Sp(16), "Break time: ").Layout(gtx)
+								},
+							),
+
+							layout.Rigid(
+								func(gtx C) D {
+									minutes := breakTime / 60
+									seconds := breakTime % 60
+									text := fmt.Sprintf("%02d:%02d", minutes, seconds)
+
+									ed := material.Editor(th, &breakEd, text)
+									ed.Editor.SingleLine = true
+
+									return ed.Layout(gtx)
 								},
 							),
 						)
