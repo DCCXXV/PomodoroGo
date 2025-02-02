@@ -16,6 +16,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/gen2brain/beeep"
 )
 
 // types
@@ -54,6 +55,20 @@ func draw(w *app.Window) error {
 				}
 
 				if progress >= 1 {
+					// Notifications
+					if !isBreak {
+						err := beeep.Alert("Study time is over!", "", "")
+						if err != nil {
+							panic(err)
+						}
+					} else {
+						err := beeep.Alert("Break time is over!", "", "")
+						if err != nil {
+							panic(err)
+						}
+					}
+
+					// Autorun or not logic
 					if auto {
 						if !isBreak {
 							laps++
